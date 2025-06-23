@@ -52,41 +52,112 @@ export const NOTIFICATION_TYPE = {
   SUCCESS: 'success'
 } as const;
 
-export const NAVIGATION_ITEMS = [
+// Nueva estructura de navegación basada en CRM AI
+export const NAVIGATION_CATEGORIES = [
   {
-    id: 'dashboard',
-    title: 'Dashboard Principal',
-    href: '/',
-    icon: 'BarChart3'
+    id: 'activity',
+    title: 'ACTIVITY',
+    icon: 'Activity',
+    items: [
+      {
+        id: 'dashboard',
+        title: 'Dashboard',
+        href: '/',
+        icon: 'BarChart3',
+        description: 'Resumen general del sistema'
+      },
+      {
+        id: 'conversations',
+        title: 'Live Chat',
+        href: '/conversations',
+        icon: 'MessageSquare',
+        description: 'Conversaciones en tiempo real'
+      },
+      {
+        id: 'leads',
+        title: 'Leads',
+        href: '/leads',
+        icon: 'Users',
+        description: 'Gestión de leads y prospectos'
+      }
+    ]
   },
   {
-    id: 'agent',
-    title: 'Agente LLM',
-    href: '/agent',
-    icon: 'Bot'
+    id: 'training',
+    title: 'TRAINING DATA',
+    icon: 'BookOpen',
+    items: [
+      {
+        id: 'products',
+        title: 'Products',
+        href: '/products',
+        icon: 'Package',
+        description: 'Catálogo y entrenamiento de productos'
+      },
+      {
+        id: 'knowledge',
+        title: 'Knowledge Base',
+        href: '/knowledge',
+        icon: 'FileText',
+        description: 'Base de conocimiento y documentos'
+      },
+      {
+        id: 'qna',
+        title: 'Q&A Training',
+        href: '/training',
+        icon: 'HelpCircle',
+        description: 'Preguntas y respuestas para entrenamiento'
+      }
+    ]
   },
   {
-    id: 'products',
-    title: 'Entrenamiento de Productos',
-    href: '/products',
-    icon: 'Package'
+    id: 'behaviour',
+    title: 'BEHAVIOUR',
+    icon: 'Brain',
+    items: [
+      {
+        id: 'agent',
+        title: 'AI Agent',
+        href: '/agent',
+        icon: 'Bot',
+        description: 'Configuración del agente IA'
+      },
+      {
+        id: 'rules',
+        title: 'Business Rules',
+        href: '/rules',
+        icon: 'Zap',
+        description: 'Reglas de negocio y automatización'
+      }
+    ]
   },
   {
-    id: 'conversations',
-    title: 'Área de Conversaciones',
-    href: '/conversations',
-    icon: 'MessageSquare'
-  },
-  {
-    id: 'config',
-    title: 'Configuración del Sistema',
-    href: '/config',
-    icon: 'Settings'
-  },
-  {
-    id: 'rules',
-    title: 'Motor de Reglas',
-    href: '/rules',
-    icon: 'Zap'
+    id: 'deployment',
+    title: 'DEPLOYMENT',
+    icon: 'Settings',
+    items: [
+      {
+        id: 'config',
+        title: 'System Config',
+        href: '/config',
+        icon: 'Settings',
+        description: 'Configuración del sistema'
+      },
+      {
+        id: 'deploy',
+        title: 'Deploy & Monitor',
+        href: '/deploy',
+        icon: 'Rocket',
+        description: 'Despliegue y monitoreo'
+      }
+    ]
   }
 ] as const;
+
+// Para compatibilidad con componentes existentes
+export const NAVIGATION_ITEMS = NAVIGATION_CATEGORIES.flatMap(category => 
+  category.items.map(item => ({
+    ...item,
+    category: category.id
+  }))
+);

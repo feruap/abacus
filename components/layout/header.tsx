@@ -1,67 +1,80 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Bell, Search, User, LogOut } from 'lucide-react';
+import { signOut, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { LogOut, Settings, User, Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useSession, signOut } from 'next-auth/react';
 
 export function Header() {
   const { data: session } = useSession();
-  const [notificationCount, setNotificationCount] = useState(3);
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/auth/signin' });
+  };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="flex h-16 items-center justify-between px-6">
-        {/* Search */}
-        <div className="flex flex-1 items-center space-x-4">
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar productos, conversaciones..."
-              className="pl-10"
-            />
-          </div>
+    <header className="h-16 border-b border-gray-200 bg-white px-6 shadow-sm">
+      <div className="flex h-full items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-xl font-semibold text-gray-900">
+            CRM AI - Sistema Agéntico
+          </h1>
+          <Badge variant="secondary" className="bg-green-100 text-green-800">
+            Producción
+          </Badge>
         </div>
 
-        {/* Actions */}
         <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
+          {/* Notificaciones */}
+          <Button variant="ghost" size="sm" className="relative">
             <Bell className="h-5 w-5" />
-            {notificationCount > 0 && (
-              <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
-                {notificationCount}
-              </Badge>
-            )}
+            <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
           </Button>
 
-          {/* User Menu */}
+          {/* Menu de usuario */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
-                <span className="hidden sm:inline-block">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
+                    {session?.user?.name?.charAt(0) || session?.user?.email?.charAt(0) || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden md:block text-sm font-medium">
                   {session?.user?.name || session?.user?.email || 'Usuario'}
                 </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem>
+              <DropdownMenuLabel>
+                Mi Cuenta
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer">
                 <User className="mr-2 h-4 w-4" />
-                <span>Perfil</span>
+                Perfil
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => signOut()}>
+              <DropdownMenuItem className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                Configuración
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="cursor-pointer text-red-600 focus:text-red-600"
+                onClick={handleSignOut}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Cerrar sesión</span>
+                Cerrar Sesión
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

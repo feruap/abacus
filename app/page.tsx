@@ -1,84 +1,67 @@
 
-import { Suspense } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthenticatedLayout } from '@/components/layout/authenticated-layout';
 import { MetricCard } from '@/components/ui/metric-card';
 import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
-import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { QuickActions } from '@/components/dashboard/quick-actions';
+import { RecentActivity } from '@/components/dashboard/recent-activity';
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard Principal</h1>
-        <p className="text-muted-foreground">
-          Vista general del sistema agéntico de ventas
-        </p>
-      </div>
+    <AuthenticatedLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Dashboard Principal
+          </h1>
+          <p className="text-gray-600">
+            Resumen completo del rendimiento del sistema agéntico de ventas
+          </p>
+        </div>
 
-      {/* Metrics Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Suspense fallback={<MetricCard title="Cargando..." value="..." />}>
-          <MetricCard
-            title="Productos Activos"
-            value="1,247"
-            description="desde ayer"
-            icon="Package"
-            trend="up"
-            trendValue="+12%"
-          />
-        </Suspense>
-        <Suspense fallback={<MetricCard title="Cargando..." value="..." />}>
+        {/* Métricas principales */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard
             title="Conversaciones Activas"
-            value="23"
-            description="en tiempo real"
-            icon="MessageSquare"
-            trend="neutral"
-          />
-        </Suspense>
-        <Suspense fallback={<MetricCard title="Cargando..." value="..." />}>
-          <MetricCard
-            title="Ventas Hoy"
-            value="$15,240"
-            description="MXN"
-            icon="DollarSign"
+            value="127"
             trend="up"
-            trendValue="+8.2%"
+            trendValue="+12%"
+            icon="MessageSquare"
           />
-        </Suspense>
-        <Suspense fallback={<MetricCard title="Cargando..." value="..." />}>
           <MetricCard
-            title="Tiempo de Respuesta"
-            value="1.2s"
-            description="promedio"
-            icon="Clock"
-            trend="down"
-            trendValue="-0.3s"
+            title="Leads Generados"
+            value="89"
+            trend="up"
+            trendValue="+24%"
+            icon="Users"
           />
-        </Suspense>
-      </div>
+          <MetricCard
+            title="Tasa de Conversión"
+            value="68.5%"
+            trend="up"
+            trendValue="+5.2%"
+            icon="TrendingUp"
+          />
+          <MetricCard
+            title="Agente IA Activo"
+            value="99.8%"
+            trend="up"
+            trendValue="+0.1%"
+            icon="Bot"
+          />
+        </div>
 
-      {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Charts Section */}
-        <div className="lg:col-span-2 space-y-6">
-          <Suspense fallback={<div>Cargando gráficos...</div>}>
+        {/* Gráficos y análisis */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
             <DashboardCharts />
-          </Suspense>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <Suspense fallback={<div>Cargando actividad...</div>}>
-            <RecentActivity />
-          </Suspense>
-          <Suspense fallback={<div>Cargando acciones...</div>}>
+          </div>
+          <div className="space-y-6">
             <QuickActions />
-          </Suspense>
+            <RecentActivity />
+          </div>
         </div>
       </div>
-    </div>
+    </AuthenticatedLayout>
   );
 }
