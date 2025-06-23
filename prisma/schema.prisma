@@ -1,0 +1,604 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/sistema_agentico_ventas/app/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          String    @default("admin")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  password      String?
+  accounts      Account[]
+  sessions      Session[]
+
+  @@map("users")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+  @@map("verificationtokens")
+}
+
+model Product {
+  id                  String                @id @default(cuid())
+  woocommerceId       Int?                  @unique
+  sku                 String                @unique
+  name                String
+  description         String?
+  shortDescription    String?
+  price               Decimal?
+  regularPrice        Decimal?
+  salePrice           Decimal?
+  stockQuantity       Int?
+  stockStatus         String                @default("instock")
+  categories          String[]
+  tags                String[]
+  images              String[]
+  attributes          Json?
+  status              String                @default("active")
+  lastSynced          DateTime              @default(now())
+  enrichedDescription String?
+  keyFeatures         String[]
+  targetAudience      String?
+  useCases            String[]
+  relatedProducts     String[]
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  conversations       ConversationProduct[]
+
+  @@map("products")
+}
+
+model ProductCategory {
+  id            String   @id @default(cuid())
+  woocommerceId Int?     @unique
+  name          String   @unique
+  slug          String   @unique
+  description   String?
+  parentId      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("product_categories")
+}
+
+model ScrapingLog {
+  id        String    @id @default(cuid())
+  url       String
+  status    String
+  message   String?
+  dataCount Int       @default(0)
+  startTime DateTime
+  endTime   DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("scraping_logs")
+}
+
+model Customer {
+  id                String              @id @default(cuid())
+  woocommerceId     Int?                @unique
+  myaliceId         String?             @unique
+  email             String?             @unique
+  phone             String?
+  name              String?
+  whatsappNumber    String?
+  totalOrders       Int                 @default(0)
+  totalSpent        Decimal             @default(0)
+  averageOrderValue Decimal             @default(0)
+  lastOrderDate     DateTime?
+  preferredLanguage String              @default("es")
+  customerSegment   String?
+  tags              String[]
+  notes             String?
+  registeredAt      DateTime?
+  avatar            String?
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  conversations     Conversation[]
+  attributes        CustomerAttribute[]
+  tickets           Ticket[]
+  orders            Order[]
+
+  @@map("customers")
+}
+
+model Conversation {
+  id                String                @id @default(cuid())
+  myaliceTicketId   String?               @unique
+  customerId        String
+  channel           String
+  status            String                @default("active")
+  priority          String                @default("normal")
+  subject           String?
+  summary           String?
+  tags              String[]
+  assignedTo        String?
+  humanTookOver     Boolean               @default(false)
+  humanTakeoverAt   DateTime?
+  responseTime      Int?
+  resolutionTime    Int?
+  messageCount      Int                   @default(0)
+  startedAt         DateTime              @default(now())
+  resolvedAt        DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  channelId         String?
+  products          ConversationProduct[]
+  myaliceChannel    MyAliceChannel?       @relation(fields: [channelId], references: [id])
+  customer          Customer              @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  messages          Message[]
+  sentimentAnalysis SentimentAnalysis[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String          @id @default(cuid())
+  conversationId String
+  direction      String
+  messageType    String
+  content        String
+  metadata       Json?
+  status         String          @default("sent")
+  processedByLLM Boolean         @default(false)
+  llmResponse    String?
+  llmMetadata    Json?
+  sentAt         DateTime        @default(now())
+  createdAt      DateTime        @default(now())
+  channelId      String?
+  myaliceChannel MyAliceChannel? @relation(fields: [channelId], references: [id])
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model ConversationProduct {
+  id             String       @id @default(cuid())
+  conversationId String
+  productId      String
+  context        String?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, productId])
+  @@map("conversation_products")
+}
+
+model SentimentAnalysis {
+  id             String       @id @default(cuid())
+  conversationId String
+  messageId      String?
+  sentiment      String
+  score          Decimal
+  confidence     Decimal
+  keywords       String[]
+  analyzedAt     DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("sentiment_analysis")
+}
+
+model Report {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  type        String
+  parameters  Json
+  schedule    String?
+  format      String[]
+  recipients  String[]
+  isActive    Boolean           @default(true)
+  createdBy   String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  executions  ReportExecution[]
+
+  @@map("reports")
+}
+
+model ReportExecution {
+  id           String    @id @default(cuid())
+  reportId     String
+  status       String
+  startTime    DateTime  @default(now())
+  endTime      DateTime?
+  resultData   Json?
+  filePath     String?
+  fileSize     Int?
+  errorMessage String?
+  report       Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("report_executions")
+}
+
+model SalesData {
+  id                 String   @id @default(cuid())
+  date               DateTime
+  orderId            String
+  woocommerceOrderId Int?
+  customerId         String?
+  totalAmount        Decimal
+  taxAmount          Decimal  @default(0)
+  shippingAmount     Decimal  @default(0)
+  discountAmount     Decimal  @default(0)
+  currency           String   @default("MXN")
+  products           Json
+  source             String
+  channel            String
+  salesAgentId       String?
+  commission         Decimal  @default(0)
+  createdAt          DateTime @default(now())
+
+  @@map("sales_data")
+}
+
+model Metric {
+  id        String   @id @default(cuid())
+  name      String
+  category  String
+  value     Decimal
+  unit      String?
+  date      DateTime
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@unique([name, date])
+  @@map("metrics")
+}
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  type        String
+  description String?
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_config")
+}
+
+model ApiCredential {
+  id          String    @id @default(cuid())
+  service     String    @unique
+  credentials Json
+  status      String    @default("active")
+  lastUsed    DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("api_credentials")
+}
+
+model BackupConfig {
+  id            String            @id @default(cuid())
+  type          String
+  schedule      String
+  retention     Int
+  status        String            @default("active")
+  storageType   String
+  storageConfig Json
+  lastBackup    DateTime?
+  nextBackup    DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  executions    BackupExecution[]
+
+  @@map("backup_config")
+}
+
+model BackupExecution {
+  id           String       @id @default(cuid())
+  configId     String
+  status       String
+  startTime    DateTime     @default(now())
+  endTime      DateTime?
+  fileSize     Int?
+  filePath     String?
+  errorMessage String?
+  config       BackupConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@map("backup_executions")
+}
+
+model BusinessRule {
+  id              String          @id @default(cuid())
+  name            String
+  description     String?
+  trigger         Json
+  conditions      Json
+  actions         Json
+  priority        Int             @default(0)
+  isActive        Boolean         @default(true)
+  category        String?
+  maxExecutions   Int?
+  cooldownMinutes Int?
+  version         Int             @default(1)
+  createdBy       String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  executions      RuleExecution[]
+
+  @@map("business_rules")
+}
+
+model RuleExecution {
+  id            String       @id @default(cuid())
+  ruleId        String
+  trigger       Json
+  context       Json
+  success       Boolean
+  actions       Json
+  result        Json?
+  executionTime Int
+  executedAt    DateTime     @default(now())
+  rule          BusinessRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@map("rule_executions")
+}
+
+model Escalation {
+  id             String    @id @default(cuid())
+  conversationId String
+  ruleId         String?
+  type           String
+  reason         String
+  priority       String    @default("normal")
+  status         String    @default("pending")
+  assignedTo     String?
+  resolvedAt     DateTime?
+  resolution     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("escalations")
+}
+
+model MyAliceChannel {
+  id                String            @id @default(cuid())
+  myaliceId         String            @unique
+  name              String
+  type              String
+  provider          String
+  status            String            @default("active")
+  settings          Json
+  messageCount      Int               @default(0)
+  conversationCount Int               @default(0)
+  lastUsed          DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  conversations     Conversation[]
+  messages          Message[]
+  templates         MyAliceTemplate[]
+
+  @@map("myalice_channels")
+}
+
+model MyAliceTemplate {
+  id         String         @id @default(cuid())
+  myaliceId  String         @unique
+  channelId  String
+  name       String
+  content    String
+  variables  Json
+  status     String         @default("approved")
+  category   String?
+  language   String         @default("es")
+  usageCount Int            @default(0)
+  lastUsed   DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  channel    MyAliceChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@map("myalice_templates")
+}
+
+model WebhookLog {
+  id          String    @id @default(cuid())
+  source      String
+  action      String
+  payload     Json
+  signature   String?
+  status      String    @default("received")
+  queueId     String?
+  processedAt DateTime?
+  attempts    Int       @default(0)
+  lastError   String?
+  ipAddress   String?
+  userAgent   String?
+  receivedAt  DateTime  @default(now())
+
+  @@map("webhook_logs")
+}
+
+model MessageQueue {
+  id          String    @id @default(cuid())
+  type        String
+  payload     Json
+  priority    Int       @default(5)
+  status      String    @default("pending")
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  processAt   DateTime  @default(now())
+  processedAt DateTime?
+  lastError   String?
+  createdAt   DateTime  @default(now())
+
+  @@index([status, processAt])
+  @@map("message_queue")
+}
+
+model ConversationAction {
+  id             String   @id @default(cuid())
+  conversationId String
+  actionType     String
+  performedBy    String?
+  reason         String?
+  metadata       Json?
+  previousStatus String?
+  newStatus      String?
+  performedAt    DateTime @default(now())
+
+  @@map("conversation_actions")
+}
+
+model MyAliceMetrics {
+  id                    String   @id @default(cuid())
+  channelId             String?
+  date                  DateTime
+  totalMessages         Int      @default(0)
+  inboundMessages       Int      @default(0)
+  outboundMessages      Int      @default(0)
+  totalConversations    Int      @default(0)
+  newConversations      Int      @default(0)
+  resolvedConversations Int      @default(0)
+  avgResponseTime       Decimal?
+  avgResolutionTime     Decimal?
+  positiveMessages      Int      @default(0)
+  negativeMessages      Int      @default(0)
+  neutralMessages       Int      @default(0)
+  createdAt             DateTime @default(now())
+
+  @@unique([channelId, date])
+  @@map("myalice_metrics")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String?
+  type      String
+  title     String
+  message   String
+  metadata  Json?
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("notifications")
+}
+
+model CustomerAttribute {
+  id         String   @id @default(cuid())
+  customerId String
+  key        String
+  value      String
+  type       String   @default("text") // text, boolean, number, date
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, key])
+  @@map("customer_attributes")
+}
+
+model Ticket {
+  id          String    @id @default(cuid())
+  myaliceId   String?   @unique
+  customerId  String
+  number      String    @unique
+  subject     String?
+  description String?
+  status      String    @default("open") // open, pending, resolved, closed
+  priority    String    @default("normal") // low, normal, high, urgent
+  channel     String?
+  assignedTo  String?
+  tags        String[]
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  resolvedAt  DateTime?
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("tickets")
+}
+
+model Order {
+  id             String    @id @default(cuid())
+  myaliceId      String?   @unique
+  customerId     String
+  number         String    @unique
+  total          Decimal
+  currency       String    @default("MXN")
+  status         String    @default("pending") // pending, processing, completed, cancelled, refunded
+  paymentMethod  String?
+  paymentStatus  String?
+  shippingMethod String?
+  shippingStatus String?
+  items          Json?     // Array of order items
+  metadata       Json?
+  placedAt       DateTime  @default(now())
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("orders")
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@map("activity_logs")
+}
